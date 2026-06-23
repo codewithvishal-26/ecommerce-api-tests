@@ -1,0 +1,858 @@
+{
+  "info": {
+    "_postman_id": "7846810d-fc76-42e0-9703-63ec34b92b62",
+    "name": "Ecommerce API Test Suite",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "54615720",
+    "_collection_link": "https://go.postman.co/collection/54615720-7846810d-fc76-42e0-9703-63ec34b92b62?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01_Authentication",
+      "item": [
+        {
+          "name": "01_Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Check Status Code is 200\r",
+                  "pm.test(\"Login - Status code is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Check Response Time\r",
+                  "pm.test(\"Login - Response time is less than 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: Check Token Exists\r",
+                  "pm.test(\"Login - Response has access token\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.accessToken).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: Check Username is Correct\r",
+                  "pm.test(\"Login - Username is correct\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.username).to.eql(\"emilys\");\r",
+                  "});\r",
+                  "\r",
+                  "// Save Token for Future Requests\r",
+                  "var jsonData = pm.response.json();\r",
+                  "pm.environment.set(\"authToken\", jsonData.accessToken);\r",
+                  "console.log(\"✅ Login Successful!\");\r",
+                  "console.log(\"Token Saved: \" + jsonData.accessToken);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\": \"emilys\",\r\n    \"password\": \"emilyspass\",\r\n    \"expiresInMins\": 30\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/auth/login",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02_Products",
+      "item": [
+        {
+          "name": "01_Get All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code\r",
+                  "pm.test(\"Get All Products - Status is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Get All Products - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: Products Array is Not Empty\r",
+                  "pm.test(\"Get All Products - Products list is not empty\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.products.length).to.be.above(0);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: Each Product Has Required Fields\r",
+                  "pm.test(\"Get All Products - Products have required fields\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    jsonData.products.forEach(function(product) {\r",
+                  "        pm.expect(product).to.have.property('id');\r",
+                  "        pm.expect(product).to.have.property('title');\r",
+                  "        pm.expect(product).to.have.property('price');\r",
+                  "    });\r",
+                  "});\r",
+                  "\r",
+                  "// Save total count\r",
+                  "var jsonData = pm.response.json();\r",
+                  "pm.environment.set(\"totalProducts\", jsonData.total);\r",
+                  "console.log(\"Total Products Found: \" + jsonData.total);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/products",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02_Get Single Product",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate random product ID before sending request\r",
+                  "var randomId = Math.floor(Math.random() * 100) + 1;\r",
+                  "pm.environment.set(\"productId\", randomId);\r",
+                  "console.log(\"Testing Random Product ID: \" + randomId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code\r",
+                  "pm.test(\"Get Single Product - Status is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Get Single Product - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: Product ID Matches\r",
+                  "pm.test(\"Get Single Product - Product ID is correct\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    var requestedId = parseInt(pm.environment.get(\"productId\"));\r",
+                  "    pm.expect(jsonData.id).to.eql(requestedId);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: Product Has Title\r",
+                  "pm.test(\"Get Single Product - Product has title\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.title).to.exist;\r",
+                  "    pm.expect(jsonData.title).to.be.a('string');\r",
+                  "});\r",
+                  "\r",
+                  "// Test 5: Product Has Price\r",
+                  "pm.test(\"Get Single Product - Product has price\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.price).to.exist;\r",
+                  "    pm.expect(jsonData.price).to.be.above(0);\r",
+                  "});\r",
+                  "\r",
+                  "// Log product details\r",
+                  "var jsonData = pm.response.json();\r",
+                  "console.log(\"Product ID: \" + jsonData.id);\r",
+                  "console.log(\"Product Name: \" + jsonData.title);\r",
+                  "console.log(\"Product Price: $\" + jsonData.price);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/products/{{productId}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "products",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03_Search Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code\r",
+                  "pm.test(\"Search Products - Status is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Search Products - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: Search Returns Results\r",
+                  "pm.test(\"Search Products - Results are not empty\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.products.length).to.be.above(0);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: Results Count is Correct\r",
+                  "pm.test(\"Search Products - Total count exists\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.total).to.exist;\r",
+                  "    pm.expect(jsonData.total).to.be.above(0);\r",
+                  "});\r",
+                  "\r",
+                  "// Log search results\r",
+                  "var jsonData = pm.response.json();\r",
+                  "console.log(\"Search Term: phone\");\r",
+                  "console.log(\"Total Results Found: \" + jsonData.total);\r",
+                  "console.log(\"First Result: \" + jsonData.products[0].title);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/products/search?q=car",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "products",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "car"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04_Add New Product",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate random product name before sending\r",
+                  "var randomNum = Math.floor(Math.random() * 1000) + 1;\r",
+                  "var productName = \"Test Product \" + randomNum;\r",
+                  "var productPrice = Math.floor(Math.random() * 1000) + 100;\r",
+                  "\r",
+                  "// Save to environment\r",
+                  "pm.environment.set(\"newProductName\", productName);\r",
+                  "pm.environment.set(\"newProductPrice\", productPrice);\r",
+                  "\r",
+                  "console.log(\"Creating Product: \" + productName);\r",
+                  "console.log(\"Product Price: $\" + productPrice);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code is 201\r",
+                  "pm.test(\"Add Product - Status is 201 Created\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(201);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Add Product - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: New Product Has ID\r",
+                  "pm.test(\"Add Product - New product has ID\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.id).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: Product Title is Correct\r",
+                  "pm.test(\"Add Product - Product title is correct\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    var expectedTitle = pm.environment.get(\"newProductName\");\r",
+                  "    pm.expect(jsonData.title).to.eql(expectedTitle);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 5: Product Has Category\r",
+                  "pm.test(\"Add Product - Product has category\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.category).to.eql(\"electronics\");\r",
+                  "});\r",
+                  "\r",
+                  "// Save new product ID for Update and Delete requests\r",
+                  "var jsonData = pm.response.json();\r",
+                  "pm.environment.set(\"newProductId\", jsonData.id);\r",
+                  "console.log(\"✅ New Product Created!\");\r",
+                  "console.log(\"Product ID: \" + jsonData.id);\r",
+                  "console.log(\"Product Name: \" + jsonData.title);\r",
+                  "console.log(\"Product Price: $\" + jsonData.price);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"{{newProductName}}\",\r\n    \"price\": \"{{newProductPrice}}\",\r\n    \"category\": \"electronics\",\r\n    \"stock\": 50,\r\n    \"brand\": \"{{testerName}}\",\r\n    \"addedBy\": \"{{testerName}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/products/add",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "products",
+                "add"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05_Update Product",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Use existing product ID (1 to 100 already exist in DummyJSON)\r",
+                  "var existingProductId = 1;\r",
+                  "pm.environment.set(\"newProductId\", existingProductId);\r",
+                  "\r",
+                  "// Generate updated product details\r",
+                  "var updatedName = \"Updated Product by Vishal\";\r",
+                  "var updatedPrice = 1299;\r",
+                  "\r",
+                  "// Save updated values\r",
+                  "pm.environment.set(\"updatedProductName\", updatedName);\r",
+                  "pm.environment.set(\"updatedProductPrice\", updatedPrice);\r",
+                  "\r",
+                  "console.log(\"Updating Existing Product ID: \" + existingProductId);\r",
+                  "console.log(\"New Name: \" + updatedName);\r",
+                  "console.log(\"New Price: $\" + updatedPrice);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code is 200\r",
+                  "pm.test(\"Update Product - Status is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Update Product - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: Product Title is Updated\r",
+                  "pm.test(\"Update Product - Title is updated correctly\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    var expectedTitle = pm.environment.get(\"updatedProductName\");\r",
+                  "    pm.expect(jsonData.title).to.eql(expectedTitle);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: Product Stock is Updated\r",
+                  "pm.test(\"Update Product - Stock is updated to 100\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.stock).to.eql(100);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 5: Product ID is Same\r",
+                  "pm.test(\"Update Product - Product ID is unchanged\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    var originalId = parseInt(pm.environment.get(\"newProductId\"));\r",
+                  "    pm.expect(jsonData.id).to.eql(originalId);\r",
+                  "});\r",
+                  "\r",
+                  "// Log updated details\r",
+                  "var jsonData = pm.response.json();\r",
+                  "console.log(\"✅ Product Updated Successfully!\");\r",
+                  "console.log(\"Product ID: \" + jsonData.id);\r",
+                  "console.log(\"Updated Name: \" + jsonData.title);\r",
+                  "console.log(\"Updated Stock: \" + jsonData.stock);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"{{updatedProductName}}\",\r\n    \"price\": \"{{updatedProductPrice}}\",\r\n    \"stock\": 100,\r\n    \"updatedBy\": \"{{testerName}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/products/{{newProductId}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "products",
+                "{{newProductId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06_Delete Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code is 200\r",
+                  "pm.test(\"Delete Product - Status is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Delete Product - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: Product is Marked as Deleted\r",
+                  "pm.test(\"Delete Product - isDeleted is true\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.isDeleted).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: Deleted Product Has ID\r",
+                  "pm.test(\"Delete Product - Response has product ID\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.id).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "// Test 5: DeletedOn Date Exists\r",
+                  "pm.test(\"Delete Product - deletedOn date exists\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.deletedOn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "// Log deletion details\r",
+                  "var jsonData = pm.response.json();\r",
+                  "console.log(\"✅ Product Deleted Successfully!\");\r",
+                  "console.log(\"Deleted Product ID: \" + jsonData.id);\r",
+                  "console.log(\"Deleted Product Name: \" + jsonData.title);\r",
+                  "console.log(\"Deleted On: \" + jsonData.deletedOn);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/products/1",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "products",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03_Cart",
+      "item": []
+    },
+    {
+      "name": "04_Users",
+      "item": [
+        {
+          "name": "01_Get All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code\r",
+                  "pm.test(\"Get All Users - Status is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Get All Users - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: Users Array is Not Empty\r",
+                  "pm.test(\"Get All Users - Users list is not empty\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.users.length).to.be.above(0);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: Each User Has Required Fields\r",
+                  "pm.test(\"Get All Users - Users have required fields\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    jsonData.users.forEach(function(user) {\r",
+                  "        pm.expect(user).to.have.property('id');\r",
+                  "        pm.expect(user).to.have.property('firstName');\r",
+                  "        pm.expect(user).to.have.property('email');\r",
+                  "    });\r",
+                  "});\r",
+                  "\r",
+                  "// Test 5: Total Users Count Exists\r",
+                  "pm.test(\"Get All Users - Total count exists\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.total).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "// Log user details\r",
+                  "var jsonData = pm.response.json();\r",
+                  "console.log(\"Total Users Found: \" + jsonData.total);\r",
+                  "console.log(\"First User: \" + jsonData.users[0].firstName + \" \" + jsonData.users[0].lastName);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/users",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02_Get Single User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate random user ID between 1 and 100\r",
+                  "var randomUserId = Math.floor(Math.random() * 100) + 1;\r",
+                  "pm.environment.set(\"userId\", randomUserId);\r",
+                  "console.log(\"Testing User ID: \" + randomUserId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code\r",
+                  "pm.test(\"Get Single User - Status is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Get Single User - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: User ID Matches\r",
+                  "pm.test(\"Get Single User - User ID is correct\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    var requestedId = parseInt(pm.environment.get(\"userId\"));\r",
+                  "    pm.expect(jsonData.id).to.eql(requestedId);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: User Has Required Fields\r",
+                  "pm.test(\"Get Single User - User has required fields\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.firstName).to.exist;\r",
+                  "    pm.expect(jsonData.lastName).to.exist;\r",
+                  "    pm.expect(jsonData.email).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "// Test 5: Email Format is Valid\r",
+                  "pm.test(\"Get Single User - Email format is valid\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.email).to.include(\"@\");\r",
+                  "});\r",
+                  "\r",
+                  "// Log user details\r",
+                  "var jsonData = pm.response.json();\r",
+                  "console.log(\"User ID: \" + jsonData.id);\r",
+                  "console.log(\"User Name: \" + jsonData.firstName + \" \" + jsonData.lastName);\r",
+                  "console.log(\"User Email: \" + jsonData.email);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/users/{{userId}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03_Create New User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate random user details\r",
+                  "var randomNum = Math.floor(Math.random() * 1000) + 1;\r",
+                  "var email = \"testuser\" + randomNum + \"@gmail.com\";\r",
+                  "\r",
+                  "pm.environment.set(\"newUserEmail\", email);\r",
+                  "console.log(\"Creating User with Email: \" + email);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code is 201\r",
+                  "pm.test(\"Create User - Status is 201 Created\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(201);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Create User - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: New User Has ID\r",
+                  "pm.test(\"Create User - New user has ID\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.id).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: First Name is Correct\r",
+                  "pm.test(\"Create User - First name is correct\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.firstName).to.eql(\"Vishal\");\r",
+                  "});\r",
+                  "\r",
+                  "// Test 5: Email is Correct\r",
+                  "pm.test(\"Create User - Email is correct\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    var expectedEmail = pm.environment.get(\"newUserEmail\");\r",
+                  "    pm.expect(jsonData.email).to.eql(expectedEmail);\r",
+                  "});\r",
+                  "\r",
+                  "// Save new user ID\r",
+                  "var jsonData = pm.response.json();\r",
+                  "pm.environment.set(\"newUserId\", jsonData.id);\r",
+                  "console.log(\"✅ New User Created!\");\r",
+                  "console.log(\"User ID: \" + jsonData.id);\r",
+                  "console.log(\"User Name: \" + jsonData.firstName + \" \" + jsonData.lastName);\r",
+                  "console.log(\"User Email: \" + jsonData.email);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"firstName\": \"Vishal\",\r\n    \"lastName\": \"Chandrabanshi\",\r\n    \"age\": 25,\r\n    \"email\": \"{{newUserEmail}}\",\r\n    \"phone\": \"+91 9876543210\",\r\n    \"username\": \"vishal_test\",\r\n    \"password\": \"vishal@123\",\r\n    \"gender\": \"male\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/users/add",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "users",
+                "add"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04_Delete User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status Code\r",
+                  "pm.test(\"Delete User - Status is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.equal(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 2: Response Time\r",
+                  "pm.test(\"Delete User - Response time below 2000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 3: User is Deleted\r",
+                  "pm.test(\"Delete User - isDeleted is true\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.isDeleted).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "// Test 4: Deleted User Has ID\r",
+                  "pm.test(\"Delete User - Response has user ID\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.id).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "// Test 5: DeletedOn Date Exists\r",
+                  "pm.test(\"Delete User - deletedOn date exists\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.deletedOn).to.exist;\r",
+                  "});\r",
+                  "\r",
+                  "// Log deletion\r",
+                  "var jsonData = pm.response.json();\r",
+                  "console.log(\"✅ User Deleted Successfully!\");\r",
+                  "console.log(\"Deleted User ID: \" + jsonData.id);\r",
+                  "console.log(\"Deleted On: \" + jsonData.deletedOn);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/users/1",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "users",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
